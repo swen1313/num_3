@@ -1,28 +1,50 @@
-import os
-from pathlib import Path
 
-VERSION: str = "1.0.0"
+import redis
+from fastapi_jwt_auth import AuthJWT
+from pydantic import BaseModel
+from .config_all import (
+    JWT_ACCESS_EXPIRES_S,
+    JWT_REFRESH_EXPIRES_S,
+    JWT_SECRET_KEY,
+    REDIS_HOST,
+    REDIS_PORT
+)
 
-# JWT SETTINGS
-JWT_SECRET_KEY: str = os.getenv("JWT_SECRET_KEY", "foo")
-JWT_ALGORITHM: str = os.getenv("JWT_ALGORITHM", "HS256")
 
-# Название проекта. Используется в Swagger-документации
-PROJECT_NAME: str = os.getenv("PROJECT_NAME", "ylab_hw_3")
+class Settings(BaseModel):
+    access_expires: int = JWT_ACCESS_EXPIRES_S
+    refresh_expires: int = JWT_REFRESH_EXPIRES_S
+    authjwt_secret_key = JWT_SECRET_KEY
+    host = REDIS_HOST
+    port = REDIS_PORT
+    authjwt_denylist_token_checks: set = {'access', 'refresh'}
+    authjwt_denylist_enabled: bool = True
 
-# Настройки Redis
-REDIS_HOST: str = os.getenv("REDIS_HOST", "localhost")
-REDIS_PORT: int = int(os.getenv("REDIS_PORT", 6379))
-CACHE_EXPIRE_IN_SECONDS: int = 60 * 5  # 5 минут
 
-# Настройки Postgres
-POSTGRES_HOST: str = os.getenv("POSTGRES_HOST", "localhost")
-POSTGRES_PORT: int = int(os.getenv("POSTGRES_PORT", 5432))
-POSTGRES_DB: str = os.getenv("POSTGRES_DB", "ylab_hw")
-POSTGRES_USER: str = os.getenv("POSTGRES_USER", "ylab_hw")
-POSTGRES_PASSWORD: str = os.getenv("POSTGRES_PASSWORD", "ylab_hw")
+settings = Settings()
 
-DATABASE_URL: str = f"postgresql://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_HOST}:{POSTGRES_PORT}/{POSTGRES_DB}"
 
-# Корень проекта
-BASE_DIR = Path(__file__).resolve().parent.parent
+@AuthJWT.load_config
+def get_config():
+    return Settings()
+
+
+@AuthJWT.token_in_denylist_loader
+def check_if_token_in_denylist(decrypted_token):
+    jti = decrypted_token['jti']
+    entry = blocked_access_tokens.get(jti)
+    return entry and entry == 'true'
+
+
+blocked_access_tokens = redis.Redis(
+    host=settings.host,
+    port=settings.port,
+    db=1,
+    decode_responses=True,
+)
+active_refresh_tokens = redis.Redis(
+    host=settings.host,
+    port=settings.port,
+    db=2,
+    decode_responses=True,
+)

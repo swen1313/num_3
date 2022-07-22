@@ -2,14 +2,14 @@ import redis
 import uvicorn
 from fastapi import FastAPI
 
-from src.api.v1.resources import posts
-from src.core import config
+from src.api.v1.resources import posts, use, users
+from src.core import config, config_all
 from src.db import cache, redis_cache
 
 app = FastAPI(
     # Конфигурируем название проекта. Оно будет отображаться в документации
-    title=config.PROJECT_NAME,
-    version=config.VERSION,
+    title=config_all.PROJECT_NAME,
+    version=config_all.VERSION,
     # Адрес документации в красивом интерфейсе
     docs_url="/api/openapi",
     redoc_url="/api/redoc",
@@ -20,8 +20,9 @@ app = FastAPI(
 
 @app.get("/")
 def root():
-    return {"service": config.PROJECT_NAME, "version": config.VERSION}
+    return {"service": config_all.PROJECT_NAME, "version": config_all.VERSION}
 
+app.include_router(router=posts.router, prefix="/api/v1/posts")
 
 @app.on_event("startup")
 def startup():
@@ -37,10 +38,12 @@ def startup():
 def shutdown():
     """Отключаемся от баз при выключении сервера"""
     cache.cache.close()
-
+    config.active_refresh_tokens.close()
+    config.blocked_access_tokens.close()
 
 # Подключаем роутеры к серверу
-app.include_router(router=posts.router, prefix="/api/v1/posts")
+app.include_router(router=use.router, prefix="/api/v1")
+app.include_router(router=users.router, prefix="/api/v1/use/users")
 
 
 if __name__ == "__main__":
@@ -50,6 +53,6 @@ if __name__ == "__main__":
     # запустим uvicorn сервер через python
     uvicorn.run(
         "main:app",
-        host="0.0.0.0",
+        host="127.0.0.1",
         port=8000,
     )
