@@ -6,7 +6,7 @@ __all__ = (
     "get_cache",
 )
 
-from src.core import config
+from src.core import config, config_all
 
 
 class AbstractCache(ABC):
@@ -22,7 +22,7 @@ class AbstractCache(ABC):
         self,
         key: str,
         value: Union[bytes, str],
-        expire: int = config.CACHE_EXPIRE_IN_SECONDS,
+        expire: int = config_all.CACHE_EXPIRE_IN_SECONDS,
     ):
         pass
 

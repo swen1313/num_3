@@ -9,6 +9,7 @@ ENV PYTHONDONTWRITEBYTECODE 1
 # Запрещает Python буферизовать stdout и stderr
 ENV PYTHONUNBUFFERED 1
 
+
 # Установка зависимостей проекта
 COPY ./requirements.txt .
 RUN pip install --upgrade pip && pip install -r requirements.txt --no-cache-dir
@@ -17,5 +18,6 @@ RUN pip install --upgrade pip && pip install -r requirements.txt --no-cache-dir
 COPY . .
 
 # Запускаем проект
-CMD ["uvicorn", "main:app", "--host", "127.0.0.1"]
-#CMD ["python", "main.py"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0"]
+
+#EXPOSE 8000

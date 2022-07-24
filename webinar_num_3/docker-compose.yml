@@ -8,6 +8,8 @@ services:
       dockerfile: Dockerfile
     env_file:
       - example.env
+    volumes:
+      - .:/usr/src/app
     networks:
       - ylab_network
     ports:

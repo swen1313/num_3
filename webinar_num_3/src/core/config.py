@@ -6,6 +6,7 @@ from .config_all import (
     JWT_ACCESS_EXPIRES_S,
     JWT_REFRESH_EXPIRES_S,
     JWT_SECRET_KEY,
+    CACHE_EXPIRE_IN_SECONDS,
     REDIS_HOST,
     REDIS_PORT
 )
